@@ -5,8 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js",
-    "postinstall": "pip3 install -U yt-dlp 2>/dev/null || pip install -U yt-dlp 2>/dev/null || true"
+    "dev": "node server.js"
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.14.4",
