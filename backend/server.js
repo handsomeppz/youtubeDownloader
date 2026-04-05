@@ -9,10 +9,16 @@ const os = require("os");
 const crypto = require("crypto");
 
 const YT_DLP_PATH = process.env.YT_DLP_PATH || "yt-dlp";
-const COOKIES_PATH = path.join(__dirname, "cookies.txt");
-const HAS_COOKIES = fs.existsSync(COOKIES_PATH);
+
+// Check multiple possible cookie locations (Render secret files live at /etc/secrets/)
+const COOKIES_LOCATIONS = [
+    path.join(__dirname, "cookies.txt"),
+    "/etc/secrets/cookies.txt",
+];
+const COOKIES_PATH = COOKIES_LOCATIONS.find(p => fs.existsSync(p)) || null;
+const HAS_COOKIES = !!COOKIES_PATH;
 console.log("[startup] YT_DLP_PATH:", YT_DLP_PATH);
-console.log("[startup] Cookies file:", HAS_COOKIES ? COOKIES_PATH : "NOT FOUND");
+console.log("[startup] Cookies file:", HAS_COOKIES ? COOKIES_PATH : "NOT FOUND (checked: " + COOKIES_LOCATIONS.join(", ") + ")");
 const youtubeDl = create(YT_DLP_PATH);
 
 const app = express();
