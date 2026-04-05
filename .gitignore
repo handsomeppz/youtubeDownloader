@@ -1,5 +1,13 @@
+# Node modules and build artifacts
 node_modules/
 build/
+
+# Environment files
 .env
 .env.local
+
+# macOS
 .DS_Store
+
+# Local helper file (should be ignored)
+commands.txt
