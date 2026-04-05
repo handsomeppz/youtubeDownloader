@@ -9,7 +9,10 @@ const os = require("os");
 const crypto = require("crypto");
 
 const YT_DLP_PATH = process.env.YT_DLP_PATH || "yt-dlp";
+const COOKIES_PATH = path.join(__dirname, "cookies.txt");
+const HAS_COOKIES = fs.existsSync(COOKIES_PATH);
 console.log("[startup] YT_DLP_PATH:", YT_DLP_PATH);
+console.log("[startup] Cookies file:", HAS_COOKIES ? COOKIES_PATH : "NOT FOUND");
 const youtubeDl = create(YT_DLP_PATH);
 
 const app = express();
@@ -62,6 +65,7 @@ app.post("/info", async (req, res) => {
             // Use spawn directly because youtube-dl-exec throws on stderr even with ignoreErrors
             const info = await new Promise((resolve, reject) => {
                 const args = [url, "--dump-single-json", "--no-warnings", "--no-check-certificates", "--ignore-errors"];
+                if (HAS_COOKIES) args.push("--cookies", COOKIES_PATH);
                 const proc = spawn(YT_DLP_PATH, args);
                 let stdout = "";
                 let stderr = "";
@@ -111,12 +115,14 @@ app.post("/info", async (req, res) => {
 
         // Single video (including mix list URLs — treat as single)
         console.log("[/info] Fetching single video info via yt-dlp...");
-        const info = await youtubeDl(url, {
+        const ytOpts = {
             dumpSingleJson: true,
             noWarnings: true,
             noCheckCertificates: true,
             noPlaylist: true,
-        });
+        };
+        if (HAS_COOKIES) ytOpts.cookies = COOKIES_PATH;
+        const info = await youtubeDl(url, ytOpts);
 
         const qualities = [];
         const seen = new Set();
@@ -176,6 +182,8 @@ app.post("/download", async (req, res) => {
         "--no-playlist",
         "--newline",  // Force progress on new lines instead of \r
     ];
+
+    if (HAS_COOKIES) args.push("--cookies", COOKIES_PATH);
 
     if (format === "mp3") {
         args.push("-x", "--audio-format", "mp3");

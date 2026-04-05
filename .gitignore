@@ -14,3 +14,6 @@ commands.txt
 
 # yt-dlp binary (downloaded during build)
 yt-dlp
+
+# YouTube cookies (sensitive)
+cookies.txt
