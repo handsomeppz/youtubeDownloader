@@ -1,0 +1,26 @@
+services:
+  # Backend API
+  - type: web
+    name: ytdl-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: apt-get install -y ffmpeg 2>/dev/null || true && npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: YT_DLP_PATH
+        value: yt-dlp
+      - key: FRONTEND_URL
+        sync: false # Set this manually in Render dashboard to your frontend URL
+
+  # Frontend static site
+  - type: web
+    name: ytdl-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: build
+    envVars:
+      - key: REACT_APP_API_URL
+        sync: false # Set this manually in Render dashboard to your backend URL

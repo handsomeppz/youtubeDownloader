@@ -9,6 +9,7 @@ const os = require("os");
 const crypto = require("crypto");
 
 const YT_DLP_PATH = process.env.YT_DLP_PATH || "yt-dlp";
+console.log("[startup] YT_DLP_PATH:", YT_DLP_PATH);
 const youtubeDl = create(YT_DLP_PATH);
 
 const app = express();
@@ -17,6 +18,7 @@ const PORT = process.env.PORT || 4000;
 const allowedOrigins = process.env.FRONTEND_URL
     ? [process.env.FRONTEND_URL]
     : ["http://localhost:3000"];
+console.log("[startup] Allowed CORS origins:", allowedOrigins);
 
 app.use(cors({
     origin: allowedOrigins,
@@ -46,6 +48,7 @@ function isMixPlaylist(url) {
 // Get video/playlist info
 app.post("/info", async (req, res) => {
     const { url } = req.body;
+    console.log("[/info] Request received, url:", url);
 
     if (!url || !YOUTUBE_URL_RE.test(url)) {
         return res.status(400).json({ error: "Invalid YouTube URL" });
@@ -53,6 +56,7 @@ app.post("/info", async (req, res) => {
 
     try {
         const isPlaylist = isPlaylistUrl(url);
+        console.log("[/info] isPlaylist:", isPlaylist);
 
         if (isPlaylist) {
             // Use spawn directly because youtube-dl-exec throws on stderr even with ignoreErrors
@@ -68,6 +72,7 @@ app.post("/info", async (req, res) => {
                         const parsed = JSON.parse(stdout);
                         resolve(parsed);
                     } catch (e) {
+                        console.error("[/info] Failed to parse playlist JSON. stderr:", stderr);
                         reject(new Error(stderr || "Failed to parse playlist info"));
                     }
                 });
@@ -105,6 +110,7 @@ app.post("/info", async (req, res) => {
         }
 
         // Single video (including mix list URLs — treat as single)
+        console.log("[/info] Fetching single video info via yt-dlp...");
         const info = await youtubeDl(url, {
             dumpSingleJson: true,
             noWarnings: true,
@@ -122,6 +128,7 @@ app.post("/info", async (req, res) => {
         }
         qualities.sort((a, b) => b.value - a.value);
 
+        console.log("[/info] Single video info OK, title:", info.title);
         res.json({
             title: info.title,
             thumbnail: info.thumbnail,
@@ -131,7 +138,7 @@ app.post("/info", async (req, res) => {
             qualities,
         });
     } catch (err) {
-        console.error("Info failed:", err.message);
+        console.error("[/info] Error:", err.message, err.stack);
         res.status(500).json({ error: "Failed to get video info", details: err.message });
     }
 });
@@ -142,6 +149,7 @@ const jobs = new Map();
 // Start a download job — returns jobId, progress is tracked via SSE
 app.post("/download", async (req, res) => {
     const { url, format = "mp4", quality } = req.body;
+    console.log("[/download] Request received, url:", url, "format:", format, "quality:", quality);
 
     if (!url || !YOUTUBE_URL_RE.test(url)) {
         return res.status(400).json({ error: "Invalid YouTube URL" });
@@ -189,6 +197,7 @@ app.post("/download", async (req, res) => {
     };
     jobs.set(jobId, job);
 
+    console.log("[/download] Spawning yt-dlp, jobId:", jobId, "args:", args.join(" "));
     // Spawn yt-dlp process
     const proc = spawn(YT_DLP_PATH, args);
     let stderrData = "";
@@ -246,11 +255,14 @@ app.post("/download", async (req, res) => {
 
     proc.on("close", (code) => {
         const files = fs.readdirSync(tmpDir);
+        console.log("[/download] yt-dlp exited, code:", code, "files in tmpDir:", files);
         if (code !== 0 || files.length === 0) {
+            console.error("[/download] Download failed, stderr:", stderrData);
             job.status = "error";
             job.error = stderrData || "Download failed";
             sendToListeners({ type: "error", error: job.error });
         } else {
+            console.log("[/download] Download complete, file:", files[0]);
             job.status = "done";
             job.progress = 100;
             job.fileName = files[0];
@@ -405,5 +417,18 @@ async function downloadPlaylist(url, res, format = "mp4", quality) {
 }
 
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`[startup] Server running on port ${PORT}`);
+    const { execSync } = require("child_process");
+    try {
+        const ytdlpVersion = execSync(`${YT_DLP_PATH} --version`).toString().trim();
+        console.log("[startup] yt-dlp version:", ytdlpVersion);
+    } catch (e) {
+        console.error("[startup] yt-dlp NOT found at path:", YT_DLP_PATH, "-", e.message);
+    }
+    try {
+        const ffmpegVersion = execSync("ffmpeg -version").toString().split("\n")[0];
+        console.log("[startup] ffmpeg:", ffmpegVersion);
+    } catch (e) {
+        console.error("[startup] ffmpeg NOT found:", e.message);
+    }
 });
