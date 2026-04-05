@@ -11,3 +11,6 @@ build/
 
 # Local helper file (should be ignored)
 commands.txt
+
+# yt-dlp binary (downloaded during build)
+yt-dlp
