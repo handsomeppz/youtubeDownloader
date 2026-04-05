@@ -64,8 +64,7 @@ app.post("/info", async (req, res) => {
         if (isPlaylist) {
             // Use spawn directly because youtube-dl-exec throws on stderr even with ignoreErrors
             const info = await new Promise((resolve, reject) => {
-                const args = [url, "--dump-single-json", "--no-warnings", "--no-check-certificates", "--ignore-errors"];
-                if (HAS_COOKIES) args.push("--cookies", COOKIES_PATH);
+                const args = [url, "--dump-single-json", "--no-warnings", "--no-check-certificates", "--ignore-errors", "--js-runtimes", "node", "--remote-components", "ejs:github"];
                 const proc = spawn(YT_DLP_PATH, args);
                 let stdout = "";
                 let stderr = "";
@@ -120,8 +119,9 @@ app.post("/info", async (req, res) => {
             noWarnings: true,
             noCheckCertificates: true,
             noPlaylist: true,
+            jsRuntimes: "node",
+            remoteComponents: "ejs:github",
         };
-        if (HAS_COOKIES) ytOpts.cookies = COOKIES_PATH;
         const info = await youtubeDl(url, ytOpts);
 
         const qualities = [];
@@ -181,9 +181,9 @@ app.post("/download", async (req, res) => {
         "--no-check-certificates",
         "--no-playlist",
         "--newline",  // Force progress on new lines instead of \r
+        "--js-runtimes", "node",
+        "--remote-components", "ejs:github",
     ];
-
-    if (HAS_COOKIES) args.push("--cookies", COOKIES_PATH);
 
     if (format === "mp3") {
         args.push("-x", "--audio-format", "mp3");
