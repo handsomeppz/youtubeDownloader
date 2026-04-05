@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="14" fill="#e94560" />
+    <!-- Cat head -->
+    <g fill="white">
+        <!-- Left ear -->
+        <polygon points="18,12 14,26 26,24" />
+        <!-- Right ear -->
+        <polygon points="46,12 50,26 38,24" />
+        <!-- Head -->
+        <ellipse cx="32" cy="34" rx="16" ry="14" />
+        <!-- Left eye -->
+        <ellipse cx="25" cy="31" rx="2.5" ry="3" fill="#e94560" />
+        <!-- Right eye -->
+        <ellipse cx="39" cy="31" rx="2.5" ry="3" fill="#e94560" />
+        <!-- Nose -->
+        <polygon points="32,36 30,38 34,38" fill="#e94560" />
+        <!-- Mouth -->
+        <path d="M30,38 Q32,42 34,38" fill="none" stroke="#e94560" stroke-width="1.2" />
+        <!-- Left whiskers -->
+        <line x1="10" y1="34" x2="22" y2="35" stroke="#e94560" stroke-width="1" />
+        <line x1="10" y1="38" x2="22" y2="37" stroke="#e94560" stroke-width="1" />
+        <!-- Right whiskers -->
+        <line x1="42" y1="35" x2="54" y2="34" stroke="#e94560" stroke-width="1" />
+        <line x1="42" y1="37" x2="54" y2="38" stroke="#e94560" stroke-width="1" />
+    </g>
+</svg>
